@@ -1,7 +1,6 @@
 package schnorrkel
 
 import (
-	"crypto/rand"
 	"errors"
 
 	"github.com/gtank/merlin"
@@ -18,7 +17,7 @@ var (
 type DerivableKey interface {
 	Encode() [32]byte
 	Decode([32]byte) error
-	DeriveKey(*merlin.Transcript, [ChainCodeLength]byte) (*ExtendedKey, error)
+	// DeriveKey(*merlin.Transcript, [ChainCodeLength]byte) (*ExtendedKey, error)
 }
 
 // ExtendedKey consists of a DerivableKey which can be a schnorrkel public or private key
@@ -69,10 +68,10 @@ func (ek *ExtendedKey) Public() (*PublicKey, error) {
 	return nil, errors.New("extended key is not a valid public or private key")
 }
 
-// DeriveKey derives an extended key from an extended key
-func (ek *ExtendedKey) DeriveKey(t *merlin.Transcript) (*ExtendedKey, error) {
-	return ek.key.DeriveKey(t, ek.chaincode)
-}
+// // DeriveKey derives an extended key from an extended key
+// func (ek *ExtendedKey) DeriveKey(t *merlin.Transcript) (*ExtendedKey, error) {
+// 	return ek.key.DeriveKey(t, ek.chaincode)
+// }
 
 // HardDeriveMiniSecretKey implements BIP-32 like "hard" derivation of a mini
 // secret from an extended key's secret key
@@ -106,59 +105,59 @@ func DeriveKeyHard(key DerivableKey, i []byte, cc [ChainCodeLength]byte) (*Exten
 	}
 }
 
-// DerviveKeySoft is an alias for DervieKeySimple() used to derive a Soft subkey
-// identified by the byte array i and chain code
-func DeriveKeySoft(key DerivableKey, i []byte, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
-	return DeriveKeySimple(key, i, cc)
-}
+// // DerviveKeySoft is an alias for DervieKeySimple() used to derive a Soft subkey
+// // identified by the byte array i and chain code
+// func DeriveKeySoft(key DerivableKey, i []byte, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
+// 	return DeriveKeySimple(key, i, cc)
+// }
 
-// DeriveKeySimple derives a Soft subkey identified by byte array i and chain code.
-func DeriveKeySimple(key DerivableKey, i []byte, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
-	t := merlin.NewTranscript("SchnorrRistrettoHDKD")
-	t.AppendMessage([]byte("sign-bytes"), i)
-	return key.DeriveKey(t, cc)
-}
+// // DeriveKeySimple derives a Soft subkey identified by byte array i and chain code.
+// func DeriveKeySimple(key DerivableKey, i []byte, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
+// 	t := merlin.NewTranscript("SchnorrRistrettoHDKD")
+// 	t.AppendMessage([]byte("sign-bytes"), i)
+// 	return key.DeriveKey(t, cc)
+// }
 
 // DeriveKey derives a new secret key and chain code from an existing secret key and chain code
-func (sk *SecretKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
-	pub, err := sk.Public()
-	if err != nil {
-		return nil, err
-	}
+// func (sk *SecretKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
+// 	pub, err := sk.Public()
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	sc, dcc, err := pub.DeriveScalarAndChaincode(t, cc)
-	if err != nil {
-		return nil, err
-	}
+// 	sc, dcc, err := pub.DeriveScalarAndChaincode(t, cc)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	// TODO: need transcript RNG to match rust-schnorrkel
-	// see: https://github.com/w3f/schnorrkel/blob/798ab3e0813aa478b520c5cf6dc6e02fd4e07f0a/src/derive.rs#L186
-	nonce := [32]byte{}
-	_, err = rand.Read(nonce[:])
-	if err != nil {
-		return nil, err
-	}
+// 	// TODO: need transcript RNG to match rust-schnorrkel
+// 	// see: https://github.com/w3f/schnorrkel/blob/798ab3e0813aa478b520c5cf6dc6e02fd4e07f0a/src/derive.rs#L186
+// 	nonce := [32]byte{}
+// 	// _, err = rand.Read(nonce[:])
+// 	// if err != nil {
+// 	// 	return nil, err
+// 	// }
 
-	dsk, err := ScalarFromBytes(sk.key)
-	if err != nil {
-		return nil, err
-	}
+// 	dsk, err := ScalarFromBytes(sk.key)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	dsk.Add(dsk, sc)
+// 	dsk.Add(dsk, sc)
 
-	dskBytes := [32]byte{}
-	copy(dskBytes[:], dsk.Encode([]byte{}))
+// 	dskBytes := [32]byte{}
+// 	copy(dskBytes[:], dsk.Encode([]byte{}))
 
-	skNew := &SecretKey{
-		key:   dskBytes,
-		nonce: nonce,
-	}
+// 	skNew := &SecretKey{
+// 		key:   dskBytes,
+// 		nonce: nonce,
+// 	}
 
-	return &ExtendedKey{
-		key:       skNew,
-		chaincode: dcc,
-	}, nil
-}
+// 	return &ExtendedKey{
+// 		key:       skNew,
+// 		chaincode: dcc,
+// 	}, nil
+// }
 
 // HardDeriveMiniSecretKey implements BIP-32 like "hard" derivation of a mini
 // secret from a secret key
@@ -192,15 +191,15 @@ func (mk *MiniSecretKey) HardDeriveMiniSecretKey(i []byte, cc [ChainCodeLength]b
 	return sk.HardDeriveMiniSecretKey(i, cc)
 }
 
-// DeriveKey derives an Extended Key from the Mini Secret Key
-func (mk *MiniSecretKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
-	if t == nil {
-		return nil, errors.New("transcript provided is nil")
-	}
+// // DeriveKey derives an Extended Key from the Mini Secret Key
+// func (mk *MiniSecretKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
+// 	if t == nil {
+// 		return nil, errors.New("transcript provided is nil")
+// 	}
 
-	sk := mk.ExpandEd25519()
-	return sk.DeriveKey(t, cc)
-}
+// 	sk := mk.ExpandEd25519()
+// 	return sk.DeriveKey(t, cc)
+// }
 
 func (pk *PublicKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
 	if t == nil {

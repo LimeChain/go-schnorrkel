@@ -1,7 +1,6 @@
 package schnorrkel
 
 import (
-	"crypto/rand"
 	"crypto/sha512"
 	"errors"
 
@@ -48,15 +47,15 @@ type Keypair struct {
 	secretKey *SecretKey
 }
 
-// GenerateKeypair generates a new schnorrkel secret key and public key
-func GenerateKeypair() (*SecretKey, *PublicKey, error) {
-	// decodes priv bytes as little-endian
-	msc, err := GenerateMiniSecretKey()
-	if err != nil {
-		return nil, nil, err
-	}
-	return msc.ExpandEd25519(), msc.Public(), nil
-}
+// // GenerateKeypair generates a new schnorrkel secret key and public key
+// func GenerateKeypair() (*SecretKey, *PublicKey, error) {
+// 	// decodes priv bytes as little-endian
+// 	msc, err := GenerateMiniSecretKey()
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	return msc.ExpandEd25519(), msc.Public(), nil
+// }
 
 // NewMiniSecretKey derives a mini secret key from a seed
 func NewMiniSecretKey(b [64]byte) *MiniSecretKey {
@@ -92,16 +91,16 @@ func NewMiniSecretKeyFromHex(s string) (*MiniSecretKey, error) {
 	return priv, nil
 }
 
-// GenerateMiniSecretKey generates a mini secret key from random
-func GenerateMiniSecretKey() (*MiniSecretKey, error) {
-	s := [MiniSecretKeySize]byte{}
-	_, err := rand.Read(s[:])
-	if err != nil {
-		return nil, err
-	}
+// // GenerateMiniSecretKey generates a mini secret key from random
+// func GenerateMiniSecretKey() (*MiniSecretKey, error) {
+// 	s := [MiniSecretKeySize]byte{}
+// 	// _, err := rand.Read(s[:])
+// 	// if err != nil {
+// 	// 	return nil, err
+// 	// }
 
-	return &MiniSecretKey{key: s}, nil
-}
+// 	return &MiniSecretKey{key: s}, nil
+// }
 
 // NewSecretKey creates a new secret key from input bytes
 func NewSecretKey(key [SecretKeySize]byte, nonce [32]byte) *SecretKey {

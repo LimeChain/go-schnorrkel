@@ -1,7 +1,6 @@
 package schnorrkel
 
 import (
-	"crypto/rand"
 	"encoding/hex"
 	"errors"
 	"strings"
@@ -31,34 +30,34 @@ func divideScalarByCofactor(s []byte) []byte {
 	return s
 }
 
-// NewRandomElement returns a random ristretto element
-func NewRandomElement() (*r255.Element, error) {
-	e := r255.NewElement()
-	s := [64]byte{}
-	_, err := rand.Read(s[:])
-	if err != nil {
-		return nil, err
-	}
+// // NewRandomElement returns a random ristretto element
+// func NewRandomElement() (*r255.Element, error) {
+// 	e := r255.NewElement()
+// 	s := [64]byte{}
+// 	// _, err := rand.Read(s[:])
+// 	// if err != nil {
+// 	// 	return nil, err
+// 	// }
 
-	return e.FromUniformBytes(s[:]), nil
-}
+// 	return e.FromUniformBytes(s[:]), nil
+// }
 
-// NewRandomScalar returns a random ristretto scalar
-func NewRandomScalar() (*r255.Scalar, error) {
-	s := [64]byte{}
-	_, err := rand.Read(s[:])
-	if err != nil {
-		return nil, err
-	}
+// // NewRandomScalar returns a random ristretto scalar
+// func NewRandomScalar() (*r255.Scalar, error) {
+// 	s := [64]byte{}
+// 	// _, err := rand.Read(s[:])
+// 	// if err != nil {
+// 	// 	return nil, err
+// 	// }
 
-	ss := r255.NewScalar()
-	sc := ss.FromUniformBytes(s[:])
-	if sc.Equal(r255.NewScalar()) == 1 {
-		return nil, errors.New("scalar generated was zero")
-	}
+// 	ss := r255.NewScalar()
+// 	sc := ss.FromUniformBytes(s[:])
+// 	if sc.Equal(r255.NewScalar()) == 1 {
+// 		return nil, errors.New("scalar generated was zero")
+// 	}
 
-	return sc, nil
-}
+// 	return sc, nil
+// }
 
 // ScalarFromBytes returns a ristretto scalar from the input bytes
 // performs input mod l where l is the group order

@@ -148,13 +148,13 @@ func (p *VrfProof) Decode(in [64]byte) error {
 	return nil
 }
 
-// VrfSign returns a vrf output and proof given a secret key and transcript.
-func (kp *Keypair) VrfSign(t *merlin.Transcript) (*VrfInOut, *VrfProof, error) {
-	if kp.secretKey == nil {
-		return nil, nil, errors.New("secretKey is nil")
-	}
-	return kp.secretKey.VrfSign(t)
-}
+// // VrfSign returns a vrf output and proof given a secret key and transcript.
+// func (kp *Keypair) VrfSign(t *merlin.Transcript) (*VrfInOut, *VrfProof, error) {
+// 	if kp.secretKey == nil {
+// 		return nil, nil, errors.New("secretKey is nil")
+// 	}
+// 	return kp.secretKey.VrfSign(t)
+// }
 
 // VrfVerify verifies that the proof and output created are valid given the public key and transcript.
 func (kp *Keypair) VrfVerify(t *merlin.Transcript, out *VrfOutput, proof *VrfProof) (bool, error) {
@@ -164,73 +164,73 @@ func (kp *Keypair) VrfVerify(t *merlin.Transcript, out *VrfOutput, proof *VrfPro
 	return kp.publicKey.VrfVerify(t, out, proof)
 }
 
-// VrfSign returns a vrf output and proof given a secret key and transcript.
-func (sk *SecretKey) VrfSign(t *merlin.Transcript) (*VrfInOut, *VrfProof, error) {
-	if t == nil {
-		return nil, nil, errors.New("transcript provided is nil")
-	}
+// // VrfSign returns a vrf output and proof given a secret key and transcript.
+// func (sk *SecretKey) VrfSign(t *merlin.Transcript) (*VrfInOut, *VrfProof, error) {
+// 	if t == nil {
+// 		return nil, nil, errors.New("transcript provided is nil")
+// 	}
 
-	p, err := sk.vrfCreateHash(t)
-	if err != nil {
-		return nil, nil, err
-	}
+// 	p, err := sk.vrfCreateHash(t)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
 
-	extra := merlin.NewTranscript(VRFLabel)
-	proof, err := sk.dleqProve(extra, p)
-	if err != nil {
-		return nil, nil, err
-	}
-	return p, proof, nil
-}
+// 	extra := merlin.NewTranscript(VRFLabel)
+// 	proof, err := sk.dleqProve(extra, p)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	return p, proof, nil
+// }
 
-// dleqProve creates a VRF proof for the transcript and input with this secret key.
-// see: https://github.com/w3f/schnorrkel/blob/798ab3e0813aa478b520c5cf6dc6e02fd4e07f0a/src/vrf.rs#L604
-func (sk *SecretKey) dleqProve(t *merlin.Transcript, p *VrfInOut) (*VrfProof, error) {
-	pub, err := sk.Public()
-	if err != nil {
-		return nil, err
-	}
-	pubenc := pub.Encode()
+// // dleqProve creates a VRF proof for the transcript and input with this secret key.
+// // see: https://github.com/w3f/schnorrkel/blob/798ab3e0813aa478b520c5cf6dc6e02fd4e07f0a/src/vrf.rs#L604
+// func (sk *SecretKey) dleqProve(t *merlin.Transcript, p *VrfInOut) (*VrfProof, error) {
+// 	pub, err := sk.Public()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	pubenc := pub.Encode()
 
-	t.AppendMessage([]byte("proto-name"), []byte("DLEQProof"))
-	t.AppendMessage([]byte("vrf:h"), p.input.Encode([]byte{}))
-	if !kusamaVRF {
-		t.AppendMessage([]byte("vrf:pk"), pubenc[:])
-	}
+// 	t.AppendMessage([]byte("proto-name"), []byte("DLEQProof"))
+// 	t.AppendMessage([]byte("vrf:h"), p.input.Encode([]byte{}))
+// 	if !kusamaVRF {
+// 		t.AppendMessage([]byte("vrf:pk"), pubenc[:])
+// 	}
 
-	// create random element R = g^r
-	// TODO: update toe use witness scalar
-	// https://github.com/w3f/schnorrkel/blob/master/src/vrf.rs#L620
-	r, err := NewRandomScalar()
-	if err != nil {
-		return nil, err
-	}
-	R := r255.NewElement()
-	R.ScalarBaseMult(r)
-	t.AppendMessage([]byte("vrf:R=g^r"), R.Encode([]byte{}))
+// 	// create random element R = g^r
+// 	// TODO: update toe use witness scalar
+// 	// https://github.com/w3f/schnorrkel/blob/master/src/vrf.rs#L620
+// 	r, err := NewRandomScalar()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	R := r255.NewElement()
+// 	R.ScalarBaseMult(r)
+// 	t.AppendMessage([]byte("vrf:R=g^r"), R.Encode([]byte{}))
 
-	// create hr := HashToElement(input)
-	hr := r255.NewElement().ScalarMult(r, p.input).Encode([]byte{})
-	t.AppendMessage([]byte("vrf:h^r"), hr)
+// 	// create hr := HashToElement(input)
+// 	hr := r255.NewElement().ScalarMult(r, p.input).Encode([]byte{})
+// 	t.AppendMessage([]byte("vrf:h^r"), hr)
 
-	if kusamaVRF {
-		t.AppendMessage([]byte("vrf:pk"), pubenc[:])
-	}
-	t.AppendMessage([]byte("vrf:h^sk"), p.output.Encode([]byte{}))
+// 	if kusamaVRF {
+// 		t.AppendMessage([]byte("vrf:pk"), pubenc[:])
+// 	}
+// 	t.AppendMessage([]byte("vrf:h^sk"), p.output.Encode([]byte{}))
 
-	c := challengeScalar(t, []byte("prove"))
-	s := r255.NewScalar()
-	sc, err := ScalarFromBytes(sk.key)
-	if err != nil {
-		return nil, err
-	}
-	s.Subtract(r, r255.NewScalar().Multiply(c, sc))
+// 	c := challengeScalar(t, []byte("prove"))
+// 	s := r255.NewScalar()
+// 	sc, err := ScalarFromBytes(sk.key)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	s.Subtract(r, r255.NewScalar().Multiply(c, sc))
 
-	return &VrfProof{
-		c: c,
-		s: s,
-	}, nil
-}
+// 	return &VrfProof{
+// 		c: c,
+// 		s: s,
+// 	}, nil
+// }
 
 // vrfCreateHash creates a VRF input/output pair on the given transcript.
 func (sk *SecretKey) vrfCreateHash(t *merlin.Transcript) (*VrfInOut, error) {
